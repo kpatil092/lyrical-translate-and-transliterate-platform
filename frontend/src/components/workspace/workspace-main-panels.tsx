@@ -1,0 +1,480 @@
+import { ArrowDownToLine, ArrowRight, Copy, ChevronDown } from "lucide-react";
+import { useState, type RefObject } from "react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import type { ChatRecord, EditingContext } from "@/components/workspace/types";
+
+const panelHeightClass = "h-[420px] sm:h-[460px] xl:h-[500px]";
+
+type WorkspaceMainPanelsProps = {
+  activeChat: ChatRecord;
+  inputText: string;
+  wordCount: number;
+  isBusy: boolean;
+  isTranslating: boolean;
+  isWaitingResponse: boolean;
+  visibleLines: string[];
+  transliteratedLines: string[];
+  visibleText: string;
+  isAnimating: boolean;
+  showJumpToLatest: boolean;
+  previewScrollRef: RefObject<HTMLDivElement | null>;
+  rightPanelEyebrow: string;
+  rightPanelTitle: string;
+  rightPanelDescription: string;
+  onInputChange: (value: string) => void;
+  onGenerate: (targetLang: string) => void;
+  onClear: () => void;
+  onPreviewScroll: () => void;
+  onJumpToLatest: () => void;
+  onCopy: () => void;
+  onDownload: () => void;
+  onWordClick: (ctx: EditingContext) => void;
+  activeOutputTab?: "flat" | "rhyme";
+  onTabChange?: (tab: "flat" | "rhyme") => void;
+  rhymedLines?: string[];
+  isGeneratingRhyme?: boolean;
+  selectedGenre?: string;
+  onGenreChange?: (genre: string) => void;
+  selectedRhymeScheme?: string;
+  onRhymeSchemeChange?: (scheme: string) => void;
+  onGenerateRhyme?: () => void;
+  onTransliterate?: (lang: string) => void;
+  isTransliterating?: boolean;
+};
+
+export function WorkspaceMainPanels(props: WorkspaceMainPanelsProps) {
+  const [language, setLanguage] = useState("hindi");
+  const [isLangOpen, setIsLangOpen] = useState(false);
+
+  const {
+    activeChat,
+    inputText,
+    wordCount,
+    isBusy,
+    isTranslating,
+    isWaitingResponse,
+    visibleLines,
+    transliteratedLines,
+    visibleText,
+    isAnimating,
+    showJumpToLatest,
+    previewScrollRef,
+    rightPanelEyebrow,
+    rightPanelTitle,
+    rightPanelDescription,
+    onInputChange,
+    onGenerate,
+    onClear,
+    onPreviewScroll,
+    onJumpToLatest,
+    onCopy,
+    onDownload,
+    onWordClick,
+    activeOutputTab = "flat",
+    onTabChange,
+    rhymedLines = [],
+    isGeneratingRhyme = false,
+    selectedGenre = "party",
+    onGenreChange,
+    selectedRhymeScheme = "AABB",
+    onRhymeSchemeChange,
+    onGenerateRhyme,
+    onTransliterate,
+    isTransliterating = false,
+  } = props;
+
+  return (
+    <>
+      <section className="grid justify-items-center items-stretch gap-4 sm:gap-6 transition-[gap,transform,opacity] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] xl:grid-cols-[1fr_1fr] xl:gap-5">
+        <Card className="flex h-full min-h-0 w-full max-w-[38rem] flex-col xl:justify-self-center">
+          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-6">
+            <p className="text-xs sm:text-sm font-medium text-[var(--text-muted)]">
+              {activeChat.title}
+            </p>
+            <CardTitle className="text-lg sm:text-xl">Original Lyrics</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Write or paste the original song lyrics you want to translate here.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="flex min-h-0 flex-1 flex-col p-4 sm:p-6 pt-0 sm:pt-0">
+            <div
+              className={`flex flex-col rounded-[20px] sm:rounded-[24px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,var(--input-bg),var(--surface-soft))] p-3 sm:p-4 ${panelHeightClass}`}
+            >
+              <div className="mb-3 flex items-center justify-between text-xs uppercase tracking-[0.22em] text-[var(--text-muted)]">
+                <span>Draft</span>
+                <span>Source lyrics</span>
+              </div>
+
+              <Textarea
+                className="panel-scroll h-full resize-none border-[var(--border-strong)]"
+                onChange={(event) => onInputChange(event.target.value)}
+                placeholder="Write something reflective, lyrical, or long-form here..."
+                value={inputText}
+              />
+            </div>
+
+            <div className="mt-auto pt-4 sm:pt-5">
+              <div className="rounded-[16px] sm:rounded-[20px] border border-[var(--border-subtle)] bg-[var(--surface-muted)] px-3 py-3 sm:px-4 sm:py-4">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-3">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs sm:text-sm text-[var(--text-secondary)]">
+                    <Badge className="text-[0.65rem] sm:text-xs px-2 py-0.5">{wordCount} words</Badge>
+                  </div>
+
+                  <div className="relative flex w-full sm:w-auto min-w-0 flex-wrap items-center justify-between sm:justify-end gap-2 sm:gap-3 z-20">
+                    <Button
+                      disabled={isBusy}
+                      onClick={onClear}
+                      size="sm"
+                      type="button"
+                      variant="ghost"
+                      className="px-2 sm:px-3 text-xs sm:text-sm h-8 sm:h-9"
+                    >
+                      Clear
+                    </Button>
+                    
+                    <div className="relative flex-1 sm:flex-none">
+                      <button
+                        onClick={() => setIsLangOpen(!isLangOpen)}
+                        className="flex h-9 sm:h-10 w-full min-w-0 sm:min-w-[140px] items-center justify-between appearance-none rounded-xl border border-[var(--border-strong)] bg-[var(--surface-raised)] px-3 sm:px-4 text-xs sm:text-sm font-medium text-[var(--text-primary)] shadow-[var(--field-shadow)] outline-none transition-all hover:bg-[var(--surface-muted)] focus:border-[var(--ring-color)] focus:shadow-[var(--field-focus-shadow)] cursor-pointer"
+                        type="button"
+                      >
+                        <span className="truncate mr-2">
+                          {language === "marathi" ? "Marathi" : "Hindi"}
+                        </span>
+                        <ChevronDown className={`h-3 w-3 sm:h-4 sm:w-4 shrink-0 px-0 transition-transform ${isLangOpen ? "rotate-180" : ""}`} />
+                      </button>
+                      
+                      {isLangOpen && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-[80]" 
+                            onClick={() => setIsLangOpen(false)} 
+                          />
+                          <div className="absolute z-[90] bottom-full mb-2 w-full flex flex-col gap-1 rounded-xl border border-[var(--border-strong)] bg-[color-mix(in_oklab,var(--surface-raised)_95%,white)] p-1.5 shadow-lg backdrop-blur-md dark:bg-[color-mix(in_oklab,var(--surface-raised)_95%,black)]">
+                            {[
+                              { id: "marathi", label: "Marathi" },
+                              { id: "hindi", label: "Hindi" },
+                            ].map((opt) => (
+                              <button
+                                key={opt.id}
+                                onClick={() => {
+                                  setLanguage(opt.id);
+                                  setIsLangOpen(false);
+                                }}
+                                className={`w-full rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 text-left text-xs sm:text-sm font-medium transition-colors ${
+                                  language === opt.id 
+                                    ? "[background:var(--button-primary)] text-[var(--button-primary-text)] shadow-sm" 
+                                    : "text-[var(--text-primary)] hover:bg-[var(--surface-muted)]"
+                                }`}
+                                type="button"
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <Button
+                      disabled={isBusy || !inputText.trim()}
+                      onClick={() => onGenerate(language)}
+                      type="button"
+                      size="sm"
+                      className="flex-1 sm:flex-none h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm"
+                    >
+                      <span className="truncate">
+                        {isTranslating ? "Translating..." : "Translate"}
+                      </span>
+                      <ArrowRight className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="flex h-full min-h-0 w-full max-w-[38rem] flex-col xl:justify-self-center">
+          <CardHeader className="flex-row items-center justify-between gap-4 space-y-0 p-4 sm:p-6 pb-2 sm:pb-6 border-b border-[var(--border-subtle)]">
+            <div className="flex gap-4">
+              <button
+                className={`text-sm font-medium transition-colors pb-1 border-b-2 ${activeOutputTab === "flat" ? "border-[var(--accent-strong)] text-[var(--text-primary)]" : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
+                onClick={() => onTabChange?.("flat")}
+              >
+                Literal Translation
+              </button>
+              <button
+                className={`text-sm font-medium transition-colors pb-1 border-b-2 ${activeOutputTab === "rhyme" ? "border-[var(--accent-strong)] text-[var(--text-primary)]" : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
+                onClick={() => onTabChange?.("rhyme")}
+              >
+                Poetic Match
+              </button>
+            </div>
+            <Badge variant="secondary" className="shrink-0 text-[0.65rem] sm:text-xs">Model output</Badge>
+          </CardHeader>
+
+          <CardContent className="flex min-h-0 flex-1 flex-col p-4 sm:p-6 pt-4 sm:pt-6">
+            <div
+              ref={previewScrollRef}
+              onScroll={onPreviewScroll}
+              className={`panel-scroll overflow-y-auto rounded-[20px] sm:rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4 sm:p-5 ${panelHeightClass}`}
+            >
+              {activeOutputTab === "rhyme" ? (
+                // --- RHYME TAB UI ---
+                language !== "hindi" ? (
+                  <div className="flex h-full min-h-full flex-col items-center justify-center rounded-[20px] border border-dashed border-[var(--border-subtle)] px-6 text-center">
+                    <p className="text-xl font-semibold">Hindi Required</p>
+                    <p className="mt-3 max-w-sm text-sm leading-7 text-[var(--text-secondary)]">
+                      The Poetic Match generator currently only supports Hindi translations. Please select Hindi as your target language in the left panel.
+                    </p>
+                  </div>
+                ) : isGeneratingRhyme ? (
+                  <div className="flex h-full min-h-full flex-col justify-center rounded-[20px] border border-dashed border-[var(--border-subtle)] px-6">
+                    <div className="mx-auto w-full max-w-lg space-y-4">
+                      <div className="flex items-center justify-center">
+                        <Badge variant="secondary">Running verse generator model</Badge>
+                      </div>
+                      <p className="text-center text-2xl font-semibold">Crafting rhyming verses...</p>
+                      <p className="text-center text-sm leading-7 text-[var(--text-secondary)] sm:text-base">
+                        This model processes the entire translation at once to ensure phonetic flow. Please wait a moment.
+                      </p>
+                      <div className="space-y-3 pt-2 w-full flex flex-col items-center">
+                         <span className="flex h-8 w-8 animate-spin items-center justify-center rounded-full border-4 border-[var(--surface-muted)] border-t-[var(--accent-strong)]"></span>
+                      </div>
+                    </div>
+                  </div>
+                ) : rhymedLines.length > 0 ? (
+                  <div className="space-y-3">
+                    {rhymedLines.map((line, index) =>
+                      line ? (
+                        <div key={`rhyme-${index}`} className="animate-[fadeInUp_0.45s_ease-out]">
+                          <p className="text-base leading-8 text-[var(--text-primary)] sm:text-[1.05rem]">
+                            {line}
+                          </p>
+                        </div>
+                      ) : (
+                        <div key={`rhymebreak-${index}`} className="h-3" />
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex h-full min-h-full flex-col items-center justify-center rounded-[20px] border border-dashed border-[var(--border-subtle)] px-4 text-center">
+                    <p className="text-2xl font-semibold mb-4">Poetic Match</p>
+                    <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-sm">
+                      Select your desired genre, then convert your literal Hindi translation into rhythmic poetry.
+                    </p>
+                    <div className="flex flex-col gap-4 w-full max-w-xs">
+                      <div>
+                        <label className="text-xs font-semibold text-[var(--text-muted)] text-left block mb-1">Genre</label>
+                        <select 
+                          value={selectedGenre} 
+                          onChange={(e) => onGenreChange?.(e.target.value)}
+                          className="w-full h-10 px-3 rounded-lg border border-[var(--border-strong)] bg-[var(--surface-raised)] text-sm text-[var(--text-primary)] outline-none"
+                        >
+                          <option value="party">Party</option>
+                          <option value="devotional">Devotional</option>
+                          <option value="romantic">Romantic</option>
+                          <option value="sad">Sad</option>
+                          <option value="happy">Happy</option>
+                        </select>
+                      </div>
+                      <Button onClick={onGenerateRhyme} className="w-full mt-2" disabled={visibleLines.length === 0}>
+                        Generate Rhyme
+                      </Button>
+                      {visibleLines.length === 0 && (
+                        <p className="text-xs text-red-500 mt-1">Translate some lyrics first.</p>
+                      )}
+                    </div>
+                  </div>
+                )
+              ) : isWaitingResponse ? (
+                // --- FLAT TRANSLATION UI ---
+                <div className="flex h-full min-h-full flex-col justify-center rounded-[20px] border border-dashed border-[var(--border-subtle)] px-6">
+                  <div className="mx-auto w-full max-w-lg space-y-4">
+                    <div className="flex items-center justify-center">
+                      <Badge variant="secondary">
+                        Sending lyrics to translation model
+                      </Badge>
+                    </div>
+                    <p className="text-center text-2xl font-semibold">
+                      Working on your translation...
+                    </p>
+                    <p className="text-center text-sm leading-7 text-[var(--text-secondary)] sm:text-base">
+                      Real model responses can take a little time. The
+                      translated lyrics will start appearing here as soon as a
+                      response is ready.
+                    </p>
+                    <div className="space-y-3 pt-2">
+                      <div className="h-4 w-4/5 animate-pulse rounded-full bg-[var(--surface-muted)]" />
+                      <div className="h-4 w-full animate-pulse rounded-full bg-[var(--surface-muted)]" />
+                      <div className="h-4 w-3/4 animate-pulse rounded-full bg-[var(--surface-muted)]" />
+                    </div>
+                  </div>
+                </div>
+              ) : visibleLines.length > 0 ? (
+                <div className="space-y-3">
+                  {visibleLines.map((line, index) =>
+                    line ? (
+                      <div key={`${line}-${index}`} className="animate-[fadeInUp_0.45s_ease-out]">
+                        <p className="text-base leading-8 text-[var(--text-primary)] sm:text-[1.05rem]">
+                          {line.split(" ").map((word, wordIdx, wordsArr) => {
+                            const prevWords = wordsArr.slice(Math.max(0, wordIdx - 2), wordIdx).join(" ");
+                            const nextWords = wordsArr.slice(wordIdx + 1, Math.min(wordsArr.length, wordIdx + 3)).join(" ");
+                            
+                            return (
+                              <span key={`${index}-${wordIdx}`} className="relative group inline-block mr-1.5">
+                                <span 
+                                  className="cursor-pointer transition-[colors,transform] duration-200 group-hover:bg-[color-mix(in_oklab,var(--accent-strong)_20%,transparent)] group-hover:text-[var(--accent-strong)] rounded px-0.5 -mx-0.5"
+                                  onClick={() => onWordClick({
+                                    lineIndex: index,
+                                    wordIndex: wordIdx,
+                                    prevWords,
+                                    targetWord: word,
+                                    nextWords
+                                  })}
+                                >
+                                  {word}
+                                </span>
+                                <div className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 rounded bg-[var(--text-primary)] text-[var(--app-bg)] text-[0.65rem] font-bold uppercase tracking-wider shadow-md whitespace-nowrap z-50">
+                                  Click to edit 
+                                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[var(--text-primary)]"></div>
+                                </div>
+                              </span>
+                            );
+                          })}
+                        </p>
+                        
+                        <div 
+                          className={`grid transition-[grid-template-rows,opacity,margin] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                            transliteratedLines[index] 
+                              ? "grid-rows-[1fr] opacity-100 mt-0.5 mb-2" 
+                              : "grid-rows-[0fr] opacity-0 mt-0 mb-0 pointer-events-none"
+                          }`}
+                        >
+                          <div className="overflow-hidden">
+                            <p className="text-[0.95rem] italic tracking-wide text-[color-mix(in_oklab,var(--text-muted)_80%,transparent)]">
+                              {transliteratedLines[index]}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div key={`break-${index}`} className="h-3" />
+                    ),
+                  )}
+
+                  {isAnimating && (
+                    <span className="inline-block h-6 w-1.5 animate-pulse rounded-full bg-[var(--accent-soft)] align-middle" />
+                  )}
+                </div>
+              ) : (
+                <div className="flex h-full min-h-full flex-col items-center justify-center rounded-[20px] border border-dashed border-[var(--border-subtle)] px-6 text-center">
+                  <p className="text-2xl font-semibold">
+                    {isTranslating
+                      ? "Translating lyrics..."
+                      : "Ready for Translation"}
+                  </p>
+                  <p className="mt-3 max-w-md text-sm leading-7 text-[var(--text-secondary)] sm:text-base">
+                    Enter your original lyrics in the panel on the left and click 'Translate lyrics'. The translated output will stream here progressively, allowing you to review the results in real-time.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-auto pt-4 sm:pt-5">
+              <div className="flex flex-col gap-3 rounded-xl sm:rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-muted)] px-3 py-3 sm:px-4 text-xs sm:text-sm text-[var(--text-secondary)]">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span>
+                    {activeOutputTab === "rhyme"
+                      ? isGeneratingRhyme 
+                        ? "Waiting for verse model" 
+                        : rhymedLines.length > 0 ? `${rhymedLines.length} rhymed lines` : "No rhymes generated"
+                      : isWaitingResponse
+                        ? "Waiting for translation model response"
+                        : visibleLines.length > 0
+                          ? `${visibleLines.length} lines currently visible`
+                          : "No preview generated yet"}
+                  </span>
+
+                  {activeOutputTab === "flat" && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {showJumpToLatest && (
+                        <Button
+                          disabled={isBusy}
+                          onClick={onJumpToLatest}
+                          size="sm"
+                          type="button"
+                          variant="secondary"
+                        >
+                          Jump to latest
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    disabled={isBusy || !visibleText.trim()}
+                    onClick={onCopy}
+                    type="button"
+                    variant="secondary"
+                  >
+                    <Copy className="h-4 w-4" />
+                    <span>Copy visible</span>
+                  </Button>
+                  <Button
+                    disabled={isBusy || !visibleText.trim()}
+                    onClick={onDownload}
+                    type="button"
+                    variant="outline"
+                  >
+                    <ArrowDownToLine className="h-4 w-4" />
+                    <span>Download .txt</span>
+                  </Button>
+                  {activeOutputTab === "flat" && language !== "english" && (
+                    <Button
+                      disabled={isBusy || !visibleText.trim() || isTransliterating}
+                      onClick={() => onTransliterate?.(language)}
+                      type="button"
+                      variant={transliteratedLines.length > 0 ? "secondary" : "outline"}
+                      className="border-[var(--accent-soft)] text-[var(--accent-strong)] hover:bg-[var(--accent-soft)]"
+                    >
+                      <span>{isTransliterating ? "Processing..." : transliteratedLines.length > 0 ? "Refresh Phonetics" : "Show Phonetics"}</span>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* <div className="mt-6 rounded-[22px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-5 py-4 text-sm text-[var(--text-secondary)]">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <p>
+            Outputs in this workspace may contain model-generated text and
+            should be reviewed before final use or sharing.
+          </p>
+          <div className="flex flex-wrap items-center gap-4 text-[var(--text-muted)]">
+            <span>Terms apply</span>
+            <span>Privacy-first workspace</span>
+            <span>Draft content only</span>
+          </div>
+        </div>
+      </div> */}
+    </>
+  );
+}

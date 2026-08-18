@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+sqlalchemy
+PyJWT[crypto]
+cryptography
+unidecode
+aksharamukha
+epitran
